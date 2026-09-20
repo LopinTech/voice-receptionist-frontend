@@ -148,7 +148,7 @@ export const VoiceVisualizer: React.FC<VoiceVisualizerProps> = ({
           style={{ transform: 'scale(1)' }}
         />
 
-        <div className="relative w-20 h-20 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center gap-1">
+        <div className="relative w-20 h-20 rounded-full bg-white border border-[#E4E8F0] shadow-sm flex items-center justify-center gap-1">
           {/*
             The bars stay mounted in every state — swapping them for an icon
             while the assistant thinks would drop the refs the animation loop
@@ -169,7 +169,7 @@ export const VoiceVisualizer: React.FC<VoiceVisualizerProps> = ({
       </div>
 
       <p
-        className="text-xs font-bold text-slate-600 dark:text-slate-300"
+        className="text-xs font-bold text-[#5C6579]"
         aria-live="polite"
       >
         {isSpeaking

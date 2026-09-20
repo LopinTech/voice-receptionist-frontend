@@ -1,8 +1,8 @@
 /**
  * The Company Profile hours selector edits hours per day; the API stores
  * either that structured shape or the legacy `{ display: "Mon-Fri 8-5" }`
- * line that the signup form still writes. This module is the only place in
- * the frontend that knows about either.
+ * line written by earlier versions of signup. This module is the only place
+ * in the frontend that knows about either.
  */
 import type { ApiDayHours, ApiDayKey, ApiHours } from './api-types';
 

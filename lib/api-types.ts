@@ -37,8 +37,9 @@ export interface ApiDayHours {
 
 /**
  * Two shapes live in this column: the structured per-day map the Company
- * Profile hours selector writes, and the legacy `{ display: "..." }` line
- * the signup form still sends. `lib/business-hours.ts` reads both.
+ * Profile hours selector and the signup wizard write, and the legacy
+ * `{ display: "..." }` line older signups stored. `lib/business-hours.ts`
+ * reads both.
  */
 export type ApiHours = Partial<Record<ApiDayKey, ApiDayHours>> & {
   display?: string;

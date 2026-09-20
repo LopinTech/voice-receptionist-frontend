@@ -131,6 +131,7 @@ export function toCall(call: ApiCall): Call {
       'Unknown caller',
     callerPhone: formatPhone(call.fromE164) || 'Unknown number',
     timestamp: formatTimestamp(call.startedAt),
+    startedAtIso: call.startedAt ?? undefined,
     duration: formatDuration(call.durationSeconds),
     audioDurationSeconds: call.durationSeconds ?? 0,
     outcome: call.outcome ? CALL_OUTCOMES[call.outcome] : 'no_action',
@@ -171,6 +172,7 @@ export function toAppointment(appointment: ApiAppointment): Appointment {
     dateTime: appointment.scheduledAt
       ? formatTimestamp(appointment.scheduledAt)
       : 'Time not set',
+    scheduledAtIso: appointment.scheduledAt ?? undefined,
     durationMinutes: appointment.durationMinutes ?? 60,
     address: appointment.address ?? '',
     notes: appointment.notes ?? '',
@@ -232,15 +234,6 @@ export function toE164(value: string): string | undefined {
   if (digits.length === 0) return undefined;
   if (digits.length === 10) return `+1${digits}`;
   return `+${digits}`;
-}
-
-/**
- * The signup form still collects hours as one free-text line, so it keeps
- * writing the legacy `{ display }` shape. The Company Profile editor writes
- * the structured shape via `toApiHours`; `lib/business-hours.ts` reads both.
- */
-export function hoursToApi(businessHours: string): Record<string, string> {
-  return { display: businessHours };
 }
 
 export function servicesToApi(

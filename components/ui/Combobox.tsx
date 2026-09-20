@@ -141,29 +141,29 @@ export const Combobox: React.FC<ComboboxProps> = ({
         onClick={() => (isOpen ? close() : open())}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-left flex items-center justify-between gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+        className="w-full px-3.5 py-2.5 rounded-xl bg-[#FCFCFD] border border-[#E4E8F0] text-xs sm:text-sm text-left flex items-center justify-between gap-2 focus:outline-none focus:ring-4 focus:ring-[#2F6BFF] cursor-pointer"
       >
         <span
           className={
             value
-              ? 'text-slate-900 dark:text-white truncate'
-              : 'text-slate-400 truncate'
+              ? 'text-[#0E1526] truncate'
+              : 'text-[#8A93A6] truncate'
           }
         >
           {value || placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${
+          className={`w-4 h-4 text-[#8A93A6] shrink-0 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
       </button>
 
       {isOpen && (
-        <div className="absolute z-30 mt-1.5 w-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl overflow-hidden animate-fadeIn">
-          <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+        <div className="absolute z-30 mt-1.5 w-full rounded-[12px] bg-white border border-[#E4E8F0] shadow-xl overflow-hidden animate-fadeIn">
+          <div className="p-2 border-b border-[#EEF0F5]">
             <div className="relative">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8A93A6]" />
               <input
                 ref={inputRef}
                 value={query}
@@ -173,7 +173,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
                 }}
                 onKeyDown={onKeyDown}
                 placeholder="Type to search…"
-                className="w-full pl-8 pr-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-8 pr-2.5 py-2 rounded-xl bg-[#FCFCFD] border border-[#E4E8F0] text-xs text-[#0E1526] focus:outline-none focus:ring-4 focus:ring-[#2F6BFF]"
               />
             </div>
           </div>
@@ -184,14 +184,14 @@ export const Combobox: React.FC<ComboboxProps> = ({
             role="listbox"
           >
             {optionCount === 0 && (
-              <p className="px-2.5 py-3 text-xs text-slate-400 text-center">
+              <p className="px-2.5 py-3 text-xs text-[#8A93A6] text-center">
                 Nothing matches &ldquo;{query}&rdquo;.
               </p>
             )}
 
             {visibleGroups.map((group) => (
               <div key={group.label} className="mb-1 last:mb-0">
-                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#8A93A6]">
                   {group.label}
                 </div>
                 {group.options.map((option) => {
@@ -210,8 +210,8 @@ export const Combobox: React.FC<ComboboxProps> = ({
                       onClick={() => choose(option)}
                       className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2 cursor-pointer ${
                         isActive
-                          ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300'
-                          : 'text-slate-700 dark:text-slate-300'
+                          ? 'bg-blue-500/10 text-blue-700 '
+                          : 'text-[#26304A] '
                       }`}
                     >
                       <span className="truncate">{option}</span>
@@ -232,10 +232,10 @@ export const Combobox: React.FC<ComboboxProps> = ({
                 data-active={activeIndex === flatOptions.length}
                 onMouseEnter={() => setActiveIndex(flatOptions.length)}
                 onClick={() => choose(query.trim())}
-                className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 mt-1 pt-2.5 cursor-pointer ${
+                className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center gap-2 border-t border-[#EEF0F5] mt-1 pt-2.5 cursor-pointer ${
                   activeIndex === flatOptions.length
-                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                    : 'text-slate-600 dark:text-slate-400'
+                    ? 'bg-emerald-500/10 text-emerald-700 '
+                    : 'text-[#5C6579] '
                 }`}
               >
                 <Plus className="w-3.5 h-3.5 shrink-0" />

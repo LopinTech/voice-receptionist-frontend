@@ -213,15 +213,15 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-lg bg-white rounded-[18px] border border-[#E4E8F0] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3">
+        <div className="p-5 border-b border-[#E4E8F0] flex items-start justify-between gap-3">
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-base font-bold text-[#0E1526] flex items-center gap-2">
               <PhoneCall className="w-4 h-4 text-emerald-500" />
               <span>Test Call</span>
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[11px] text-[#6B7488]">
               Speak to your own assistant, exactly as a caller would.
             </p>
           </div>
@@ -230,7 +230,7 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+            className="p-1.5 rounded-lg text-[#8A93A6] hover:text-[#26304A] cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -239,8 +239,8 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
         {/* Body */}
         <div className="p-5 space-y-4 overflow-y-auto flex-1">
           {!hasAssistant ? (
-            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2">
-              <div className="flex items-start gap-2 text-xs font-bold text-amber-700 dark:text-amber-300">
+            <div className="p-4 rounded-[12px] bg-amber-500/10 border border-amber-500/30 space-y-2">
+              <div className="flex items-start gap-2 text-xs font-bold text-amber-700">
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>
                   Your assistant has not been created yet, so there is nothing
@@ -258,7 +258,7 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
           ) : (
             <>
               {error && (
-                <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-xs text-rose-700 dark:text-rose-300 flex items-start gap-2">
+                <div className="p-3 rounded-[12px] bg-rose-500/10 border border-rose-500/30 text-xs text-rose-700 flex items-start gap-2">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -266,10 +266,10 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
 
               {callState === 'idle' && (
                 <div className="text-center py-6 space-y-3">
-                  <div className="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                  <div className="w-14 h-14 mx-auto rounded-[12px] bg-emerald-500/10 flex items-center justify-center">
                     <Mic className="w-6 h-6 text-emerald-500" />
                   </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
+                  <p className="text-xs text-[#6B7488] max-w-xs mx-auto leading-relaxed">
                     Your browser will ask for the microphone. Talk to the
                     assistant the way a customer would — nothing from this call
                     is saved.
@@ -280,7 +280,7 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
               {callState === 'connecting' && (
                 <div className="text-center py-8 space-y-2">
                   <Loader2 className="w-6 h-6 mx-auto animate-spin text-emerald-500" />
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <p className="text-xs font-semibold text-[#6B7488]">
                     Connecting to your assistant…
                   </p>
                 </div>
@@ -293,7 +293,7 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
                       <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75" />
                       <span className="relative rounded-full h-2 w-2 bg-emerald-500" />
                     </span>
-                    <span className="text-emerald-600 dark:text-emerald-400">
+                    <span className="text-emerald-600">
                       Live
                     </span>
                   </div>
@@ -307,7 +307,7 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
               )}
 
               {callState === 'ended' && (
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-2">
+                <p className="text-xs text-[#6B7488] text-center py-2">
                   Call ended. Nothing from it was recorded or saved.
                 </p>
               )}
@@ -317,7 +317,7 @@ export const TestCallModal: React.FC<TestCallModalProps> = ({
 
         {/* Footer */}
         {hasAssistant && (
-          <div className="p-5 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-2">
+          <div className="p-5 border-t border-[#E4E8F0] flex items-center justify-end gap-2">
             {callState === 'live' || callState === 'connecting' ? (
               <button
                 type="button"

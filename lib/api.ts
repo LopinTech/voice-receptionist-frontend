@@ -2,8 +2,10 @@ import type {
   ApiAppointment,
   ApiCall,
   ApiGeoResult,
+  ApiHours,
   ApiOverview,
   ApiProfile,
+  ApiServiceArea,
   ApiServiceItem,
   ApiSession,
 } from './api-types';
@@ -71,8 +73,9 @@ export interface RegisterPayload {
   ownerName?: string;
   trade?: string;
   services: ApiServiceItem[];
-  hours: Record<string, string>;
-  serviceArea?: string;
+  hours: ApiHours;
+  /** The picked areas; the backend derives the summary line from them. */
+  serviceAreas?: ApiServiceArea[];
   pricingNotes?: string;
   businessPhoneE164?: string;
   carrier?: string;
@@ -136,6 +139,16 @@ export const api = {
    */
   geoSearch: (query: string, signal?: AbortSignal) =>
     request<ApiGeoResult[]>(`/me/geo/search?q=${encodeURIComponent(query)}`, {
+      signal,
+    }),
+
+  /**
+   * The same search without a session, for the service-area step of signup —
+   * there is no account yet at that point. Capped per IP by the backend, so
+   * it can answer 429; the caller surfaces that as a retry hint.
+   */
+  publicGeoSearch: (query: string, signal?: AbortSignal) =>
+    request<ApiGeoResult[]>(`/geo/search?q=${encodeURIComponent(query)}`, {
       signal,
     }),
 

@@ -31,7 +31,10 @@ export interface Call {
   callControlId: string;
   callerName: string;
   callerPhone: string;
+  /** Human-readable, for display: "Today at 11:42 AM". */
   timestamp: string;
+  /** The same moment as an absolute ISO string, for grouping by day. */
+  startedAtIso?: string;
   duration: string;
   audioDurationSeconds: number;
   outcome: CallOutcome;
@@ -50,7 +53,10 @@ export interface Appointment {
   customerName: string;
   customerPhone: string;
   service: string;
-  dateTime: string; // ISO or human readable
+  /** Human-readable, for display. */
+  dateTime: string;
+  /** The same moment as an absolute ISO string, for calendar placement. */
+  scheduledAtIso?: string;
   durationMinutes: number;
   address: string;
   notes: string;
