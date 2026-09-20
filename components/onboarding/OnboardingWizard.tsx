@@ -962,25 +962,22 @@ export const OnboardingWizard: React.FC = () => {
       {/* ---------------------------------------------------------- *
        * Right: what they are signing up to get
        * ---------------------------------------------------------- */}
-      <div className="hidden max-h-screen min-w-0 items-center justify-center overflow-y-auto bg-[#F2F4F8] px-6 py-10 lg:flex xl:px-14">
-        <figure className="m-0 w-full max-w-[620px]">
-          {/* `dashboard-preview.png` is the supplied screenshot trimmed of
-              its transparent margin (a fifth of the width); the artwork's
-              own shadow and transparency are kept, so the panel shows
-              through behind it. */}
-          <Image
-            src="/assets/images/dashboard-preview.png"
-            alt="The Ringgy AI dashboard, showing answered calls, today's schedule and recent calls"
-            width={1491}
-            height={849}
-            priority
-            className="mx-auto h-auto w-full object-contain"
-          />
-          <figcaption className="mt-4 text-center text-sm text-[#5C6579]">
-            Every call your receptionist answers — and every job it books —
-            lands here.
-          </figcaption>
-        </figure>
+      {/* The device is deliberately larger than the panel and anchored to
+          its left edge, so it runs off the right the way the reference
+          layout does — a product shot that continues past the frame reads
+          as a window onto the app rather than a picture pasted into a box.
+          `dashboard-preview.png` is the supplied screenshot trimmed of its
+          transparent margin; its own shadow and transparency are kept, so
+          the panel shows through behind it. */}
+      <div className="relative hidden min-w-0 overflow-hidden bg-[#F2F4F8] lg:block">
+        <Image
+          src="/assets/images/dashboard-preview.png"
+          alt="The Ringgy AI dashboard, showing answered calls, today's schedule and recent calls"
+          width={1491}
+          height={849}
+          priority
+          className="absolute top-1/2 left-[6%] w-[150%] max-w-none -translate-y-1/2"
+        />
       </div>
     </div>
   );
