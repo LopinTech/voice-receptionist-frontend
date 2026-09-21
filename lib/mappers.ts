@@ -219,6 +219,8 @@ export function toTenantConfig(profile: ApiProfile): TenantConfig {
     serviceAreas: profile.serviceAreas ?? [],
     serviceArea: profile.serviceArea ?? '',
     pricingNotes: profile.pricingNotes ?? '',
+    voice: profile.voice ?? '',
+    language: profile.language ?? '',
     smsAlertsEnabled: profile.smsAlertsEnabled,
     emailDigestEnabled: profile.emailDigestEnabled,
   };
@@ -261,6 +263,8 @@ export function tenantConfigToApi(
     // and is deliberately not sent, so the two cannot disagree.
     serviceAreas: config.serviceAreas,
     pricingNotes: config.pricingNotes || undefined,
+    voice: config.voice || undefined,
+    language: config.language || undefined,
     businessPhoneE164: toE164(config.phoneNumber),
     carrier: config.carrier || undefined,
     // `forwardingNumber` is the only UI field backed by this column now that

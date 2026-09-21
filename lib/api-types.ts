@@ -54,6 +54,21 @@ export interface ApiServiceArea {
   radiusMiles: number;
 }
 
+/** One voice offered by the picker; served by GET /voices. */
+export interface ApiVoice {
+  /** Telnyx voice id, e.g. "Telnyx.Ultra.<uuid>". */
+  id: string;
+  name: string;
+  description: string;
+  gender: 'Female' | 'Male';
+  language: string;
+}
+
+export interface ApiVoiceCatalogue {
+  languages: { code: string; label: string }[];
+  voices: ApiVoice[];
+}
+
 /** A location-search hit from GET /me/geo/search. */
 export interface ApiGeoResult {
   label: string;
@@ -99,6 +114,9 @@ export interface ApiProfile {
   carrier: string | null;
   customGreeting: string | null;
   emergencyFallbackNumber: string | null;
+  /** Telnyx voice id and its language; null for tenants from before the voice step. */
+  voice: string | null;
+  language: string | null;
   smsAlertsEnabled: boolean;
   emailDigestEnabled: boolean;
   telnyxResource: ApiTelnyxResource | null;

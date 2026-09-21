@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Seven-step signup onboarding. Everything the wizard collects is sent in a
+ * Eight-step signup onboarding. Everything the wizard collects is sent in a
  * single `POST /auth/register` at the end — there is no account until the
  * last step, so a visitor who abandons halfway leaves no half-built tenant
  * behind. The live preview on the right is illustrative, not real data.
@@ -12,7 +12,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, Loader2, Search, X } from 'lucide-react';
+import { AlertTriangle, Loader2, Pause, Play, Search, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toE164 } from '@/lib/mappers';
 import { formatTime } from '@/lib/business-hours';
@@ -21,6 +21,8 @@ import type {
   ApiGeoResult,
   ApiHours,
   ApiServiceArea,
+  ApiVoice,
+  ApiVoiceCatalogue,
 } from '@/lib/api-types';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Logo } from '@/components/brand/Logo';
@@ -82,6 +84,12 @@ const STEPS = [
     title: 'When are you available?',
     sub: 'Your AI receptionist can handle customers even when your team is unavailable.',
   },
+  {
+    id: 'voice',
+    key: 'Voice',
+    title: 'How should your receptionist sound?',
+    sub: 'Pick the language and voice your customers will hear when they call.',
+  },
   { id: 'ready', key: 'Ready', title: 'Your AI receptionist is ready', sub: '' },
 ] as const;
 
@@ -102,6 +110,37 @@ const TRADE_CHIPS = [
 ];
 
 const OTHER = 'Other';
+
+/** Matches the backend's fallback, so an unreachable catalogue still submits. */
+const DEFAULT_LANGUAGE = 'en-US';
+const GENDERS: ('Female' | 'Male')[] = ['Female', 'Male'];
+
+/**
+ * What the sample says. The backend builds the spoken text from the same
+ * wording (see `voice-catalog.ts`) — it is written there rather than sent
+ * from here so the preview endpoint cannot be used as an open
+ * text-to-speech service, and repeated here so the caption matches what is
+ * actually read aloud.
+ */
+function sampleSentence(businessName: string, language: string): string {
+  const name = businessName.trim() || 'your business';
+
+  switch (language) {
+    case 'es-MX':
+      return `Gracias por llamar a ${name}. Puedo agendar una visita, darle precios o tomar un mensaje — ¿en qué le ayudo?`;
+    case 'fr-CA':
+      return `Merci d'appeler ${name}. Je peux planifier une visite, donner les tarifs ou prendre un message — que puis-je faire pour vous ?`;
+    default:
+      return `Thanks for calling ${name}. I can book a visit, share pricing, or take a message — what do you need?`;
+  }
+}
+
+/** The waveform in the sample card; heights are decorative, not real audio. */
+const WAVE_BARS = Array.from({ length: 18 }, (_, index) => ({
+  key: index,
+  height: 18 + ((index * 7919) % 30),
+  delay: `${(index * 0.06).toFixed(2)}s`,
+}));
 
 /**
  * One radius for every area picked here, rather than a slider each: signup
@@ -203,6 +242,16 @@ export const OnboardingWizard: React.FC = () => {
   ]);
   const [hours, setHours] = useState<HourRow[]>(INITIAL_HOURS);
 
+  const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
+  const [gender, setGender] = useState<'Female' | 'Male'>('Female');
+  const [voiceId, setVoiceId] = useState<string | null>(null);
+  const [catalogue, setCatalogue] = useState<ApiVoiceCatalogue | null>(null);
+  const [catalogueError, setCatalogueError] = useState<string | null>(null);
+  const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previewAbortRef = useRef<AbortController | null>(null);
+
   const [areas, setAreas] = useState<ApiServiceArea[]>([]);
   const [radiusMiles, setRadiusMiles] = useState(DEFAULT_RADIUS_MILES);
   const [areaQuery, setAreaQuery] = useState('');
@@ -219,6 +268,102 @@ export const OnboardingWizard: React.FC = () => {
     .map((service) => service.name.trim())
     .filter(Boolean);
   const openRows = hours.filter((row) => row.open);
+
+  // The catalogue is fetched once, when the wizard mounts: it is a small
+  // static list, and having it ready before the voice step means the picker
+  // never renders empty.
+  useEffect(() => {
+    let active = true;
+
+    api
+      .voices()
+      .then((found) => {
+        if (!active) return;
+        setCatalogue(found);
+        setCatalogueError(null);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setCatalogueError(
+          error instanceof Error
+            ? error.message
+            : 'Could not load the voice list.',
+        );
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Stop any sample that is still playing when the wizard goes away.
+  useEffect(
+    () => () => {
+      previewAbortRef.current?.abort();
+      audioRef.current?.pause();
+    },
+    [],
+  );
+
+  const languages = catalogue?.languages ?? [];
+  const voicesForChoice: ApiVoice[] = (catalogue?.voices ?? []).filter(
+    (voice) => voice.language === language && voice.gender === gender,
+  );
+  const selectedVoice =
+    voicesForChoice.find((voice) => voice.id === voiceId) ??
+    voicesForChoice[0] ??
+    null;
+
+  const sampleLine = sampleSentence(business, language);
+
+  const stopPreview = () => {
+    previewAbortRef.current?.abort();
+    audioRef.current?.pause();
+    audioRef.current = null;
+    setPlayingVoiceId(null);
+  };
+
+  const playPreview = async (voice: ApiVoice) => {
+    if (playingVoiceId === voice.id) {
+      stopPreview();
+      return;
+    }
+
+    stopPreview();
+    setPreviewError(null);
+    setPlayingVoiceId(voice.id);
+
+    const controller = new AbortController();
+    previewAbortRef.current = controller;
+
+    try {
+      const clip = await api.previewVoice(
+        voice.id,
+        business.trim(),
+        controller.signal,
+      );
+      if (controller.signal.aborted) return;
+
+      // The object URL is released when the clip ends, so a visitor who
+      // auditions every voice does not leak one blob per play.
+      const url = URL.createObjectURL(clip);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        setPlayingVoiceId((current) => (current === voice.id ? null : current));
+      };
+      await audio.play();
+    } catch (error: unknown) {
+      if (controller.signal.aborted) return;
+      setPlayingVoiceId(null);
+      setPreviewError(
+        error instanceof Error
+          ? error.message
+          : 'Could not play that sample. Try again in a moment.',
+      );
+    }
+  };
 
   // The spinner and the cleared results belong to the keystroke that caused
   // them; the effect below stays purely about fetching.
@@ -377,6 +522,8 @@ export const OnboardingWizard: React.FC = () => {
           })),
         hours: toApiHours(hours),
         serviceAreas: areas.length ? areas : undefined,
+        voice: selectedVoice?.id,
+        language: selectedVoice ? language : undefined,
         businessPhoneE164: toE164(phone),
       });
       await refresh();
@@ -424,6 +571,14 @@ export const OnboardingWizard: React.FC = () => {
               : areas.map((area) => area.label).join(', ')
           } · ${radiusMiles} mi`
         : 'Anywhere — no areas set',
+    },
+    {
+      label: 'Voice',
+      value: selectedVoice
+        ? `${selectedVoice.name} · ${
+            languages.find((entry) => entry.code === language)?.label ?? language
+          }`
+        : 'Standard voice',
     },
     {
       label: 'Services',
@@ -893,6 +1048,180 @@ export const OnboardingWizard: React.FC = () => {
                   </div>
                 </div>
               </>
+            )}
+
+            {stepId === 'voice' && (
+              <div className="flex flex-col gap-[22px]">
+                <label className="flex flex-col gap-2.5">
+                  <span className={LABEL}>Language</span>
+                  <select
+                    value={language}
+                    onChange={(event) => {
+                      stopPreview();
+                      setLanguage(event.target.value);
+                      setVoiceId(null);
+                    }}
+                    className={`${FIELD} cursor-pointer`}
+                  >
+                    {(languages.length
+                      ? languages
+                      : [{ code: DEFAULT_LANGUAGE, label: 'English (US)' }]
+                    ).map((entry) => (
+                      <option key={entry.code} value={entry.code}>
+                        {entry.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <div className="flex flex-col gap-2.5">
+                  <span className={LABEL}>Voice gender</span>
+                  <div className="flex flex-wrap gap-2">
+                    {GENDERS.map((name) => {
+                      const on = gender === name;
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => {
+                            stopPreview();
+                            setGender(name);
+                            setVoiceId(null);
+                          }}
+                          className={`rounded-full border px-[15px] py-2.5 text-[13.5px] font-semibold transition ${
+                            on
+                              ? 'border-[#2F6BFF] bg-[#2F6BFF] text-white'
+                              : 'border-[#DDE1EA] bg-white text-[#26304A] hover:border-[#B9C3D8]'
+                          }`}
+                        >
+                          {name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2.5">
+                  <span className={LABEL}>Choose a voice</span>
+
+                  {catalogueError && (
+                    <p className="m-0 text-[13px] text-amber-700">
+                      {catalogueError} Your receptionist will use the standard
+                      voice until you pick one in your profile.
+                    </p>
+                  )}
+
+                  {!catalogue && !catalogueError && (
+                    <div className="flex items-center gap-2 text-[13px] text-[#6B7488]">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading voices…
+                    </div>
+                  )}
+
+                  {catalogue && voicesForChoice.length === 0 && (
+                    <p className="m-0 text-[13px] text-[#6B7488]">
+                      No {gender.toLowerCase()} voice in this language yet — try
+                      the other one.
+                    </p>
+                  )}
+
+                  <div className="flex flex-col gap-2.5">
+                    {voicesForChoice.map((voice) => {
+                      const on = selectedVoice?.id === voice.id;
+                      const isPlaying = playingVoiceId === voice.id;
+                      return (
+                        <div
+                          key={voice.id}
+                          className={`flex items-center gap-3.5 rounded-[13px] border px-3.5 py-3.5 transition ${
+                            on
+                              ? 'border-[#2F6BFF] bg-[#F4F7FF]'
+                              : 'border-[#E4E8F0] bg-[#FCFCFD]'
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setVoiceId(voice.id)}
+                            className="flex min-w-0 flex-1 items-center gap-3.5 text-left"
+                          >
+                            <span
+                              className={`grid h-[38px] w-[38px] flex-none place-items-center rounded-full text-[12.5px] font-extrabold ${
+                                on
+                                  ? 'bg-[#2F6BFF] text-white'
+                                  : 'bg-[#EEF3FF] text-[#2F6BFF]'
+                              }`}
+                            >
+                              {voice.name.slice(0, 2).toUpperCase()}
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block text-[14.5px] font-bold text-[#0E1526]">
+                                {voice.name}
+                              </span>
+                              <span className="mt-0.5 block text-[12.5px] text-[#6B7488]">
+                                {voice.description} · {voice.gender}
+                              </span>
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void playPreview(voice)}
+                            aria-label={
+                              isPlaying
+                                ? `Stop the ${voice.name} sample`
+                                : `Play the ${voice.name} sample`
+                            }
+                            className={`grid h-[38px] w-[38px] flex-none place-items-center rounded-full border transition ${
+                              isPlaying
+                                ? 'border-[#2F6BFF] bg-[#2F6BFF] text-white'
+                                : 'border-[#DDE1EA] bg-white text-[#2F6BFF] hover:border-[#2F6BFF]'
+                            }`}
+                          >
+                            {isPlaying ? (
+                              <Pause className="h-4 w-4" />
+                            ) : (
+                              <Play className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className={`${CARD} bg-[#F8FAFF] px-[18px] py-[17px]`}>
+                  <div className="mb-2.5 text-xs font-bold tracking-[.08em] text-[#2F6BFF] uppercase">
+                    Sample sentence
+                  </div>
+                  <div className="text-sm leading-[1.55] text-pretty text-[#26304A]">
+                    {sampleLine}
+                  </div>
+                  <div className="mt-[15px] flex items-center gap-3.5">
+                    <div className="flex h-[34px] min-w-0 flex-1 items-center gap-[3px]">
+                      {WAVE_BARS.map((bar) => (
+                        <div
+                          key={bar.key}
+                          className="min-w-0 flex-1 rounded-full bg-[#2F6BFF] opacity-75 transition-[height] duration-300"
+                          style={{
+                            height: playingVoiceId ? `${bar.height}px` : '5px',
+                            transitionDelay: bar.delay,
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex-none text-[12.5px] font-semibold whitespace-nowrap text-[#5C6579]">
+                      {playingVoiceId
+                        ? 'Playing sample…'
+                        : selectedVoice
+                          ? `Tap play to hear ${selectedVoice.name} read this.`
+                          : 'Pick a voice to hear it.'}
+                    </div>
+                  </div>
+                  {previewError && (
+                    <p className="m-0 mt-2.5 text-[12.5px] text-amber-700">
+                      {previewError}
+                    </p>
+                  )}
+                </div>
+              </div>
             )}
 
             {stepId === 'ready' && (

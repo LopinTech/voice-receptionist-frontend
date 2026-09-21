@@ -118,6 +118,9 @@ export interface TenantConfig {
   /** Summary of `serviceAreas`, derived by the backend on save. */
   serviceArea: string;
   pricingNotes: string;
+  /** Telnyx voice id the assistant speaks with, and its language. */
+  voice: string;
+  language: string;
   /**
    * The owner's own line, where calls go when the assistant hands off.
    * Backed by the API's `emergencyFallbackNumber`; the Account page is the

@@ -7,6 +7,7 @@ import type {
   ApiProfile,
   ApiServiceArea,
   ApiServiceItem,
+  ApiVoiceCatalogue,
   ApiSession,
 } from './api-types';
 
@@ -76,6 +77,9 @@ export interface RegisterPayload {
   hours: ApiHours;
   /** The picked areas; the backend derives the summary line from them. */
   serviceAreas?: ApiServiceArea[];
+  /** Telnyx voice id and language picked on the voice step. */
+  voice?: string;
+  language?: string;
   pricingNotes?: string;
   businessPhoneE164?: string;
   carrier?: string;
@@ -141,6 +145,38 @@ export const api = {
     request<ApiGeoResult[]>(`/me/geo/search?q=${encodeURIComponent(query)}`, {
       signal,
     }),
+
+  /**
+   * The voices the picker offers, checked against Telnyx's live catalogue by
+   * the backend. Unauthenticated: the voice is chosen before the account
+   * exists.
+   */
+  voices: () => request<ApiVoiceCatalogue>('/voices'),
+
+  /**
+   * A spoken sample of one voice, as MP3. The sentence is built server-side
+   * from the business name — this is a billed Telnyx request, not an open
+   * text-to-speech endpoint.
+   */
+  previewVoice: async (
+    voiceId: string,
+    businessName: string,
+    signal?: AbortSignal,
+  ): Promise<Blob> => {
+    const response = await fetch(`${API_BASE}/voices/preview`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ voiceId, businessName }),
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new ApiError(response.status, await readError(response));
+    }
+
+    return response.blob();
+  },
 
   /**
    * The same search without a session, for the service-area step of signup —

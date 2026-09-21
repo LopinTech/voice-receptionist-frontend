@@ -11,7 +11,7 @@
  * half-finished changes never reach the assistant by accident.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import {
   AlertTriangle,
@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import type { ServiceItem, TenantConfig } from '@/types/schema';
+import { api } from '@/lib/api';
 import { Combobox } from '@/components/ui/Combobox';
 import { BusinessHoursEditor } from '@/components/assistant/BusinessHoursEditor';
 import { ServiceAreaPicker } from '@/components/assistant/ServiceAreaPicker';
@@ -80,6 +81,7 @@ export const CompanyProfileView: React.FC<CompanyProfileViewProps> = ({
   onResyncAssistant,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [voiceLabel, setVoiceLabel] = useState<string | null>(null);
   const [form, setForm] = useState<TenantConfig>(tenant);
   const [justSaved, setJustSaved] = useState(false);
 
@@ -93,6 +95,36 @@ export const CompanyProfileView: React.FC<CompanyProfileViewProps> = ({
     setSyncedFrom(tenant);
     if (!isEditing) setForm(tenant);
   }
+
+  // The profile stores a Telnyx voice id; the catalogue is what turns it
+  // back into "Cindy · English (US)". Skipped entirely when no voice is set.
+  useEffect(() => {
+    if (!tenant.voice) return;
+
+    let active = true;
+
+    api
+      .voices()
+      .then((catalogue) => {
+        if (!active) return;
+        const voice = catalogue.voices.find((entry) => entry.id === tenant.voice);
+        const language = catalogue.languages.find(
+          (entry) => entry.code === tenant.language,
+        );
+        setVoiceLabel(
+          voice
+            ? `${voice.name}${language ? ` · ${language.label}` : ''}`
+            : 'Custom voice',
+        );
+      })
+      .catch(() => {
+        if (active) setVoiceLabel('Custom voice');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [tenant.voice, tenant.language]);
 
   const patch = (changes: Partial<TenantConfig>) =>
     setForm((current) => ({ ...current, ...changes }));
@@ -239,6 +271,13 @@ export const CompanyProfileView: React.FC<CompanyProfileViewProps> = ({
               <Row label="Trade">{tenant.trade || <NotSet />}</Row>
               <Row label="Owner">{tenant.ownerName || <NotSet />}</Row>
               <Row label="Phone">{tenant.phoneNumber || <NotSet />}</Row>
+              <Row label="Voice">
+                {(tenant.voice ? voiceLabel : null) ?? (
+                  <span className="font-medium text-[#9AA2B4]">
+                    Standard voice
+                  </span>
+                )}
+              </Row>
               <Row label="Pricing notes">
                 {tenant.pricingNotes || <NotSet />}
               </Row>
