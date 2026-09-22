@@ -162,11 +162,50 @@ export const CallsView: React.FC<CallsViewProps> = ({
                 </div>
               )}
 
-              <p className="m-0 text-xs leading-[1.5] text-[#6D778F]">
-                Call recordings and transcripts are not captured yet, so this
-                panel shows what the assistant recorded about the call.
-              </p>
             </dl>
+
+            {/* What was actually said. The lines come from the Telnyx
+                conversation the call produced, so a call the assistant
+                answered has one whether it arrived by phone or through the
+                browser test call. */}
+            <div className="mt-4 border-t border-white/10 pt-4">
+              <div className="mb-3 text-[10px] font-bold tracking-[.07em] text-[#8A94AC] uppercase">
+                Transcript
+              </div>
+
+              {active.transcript.length === 0 ? (
+                <p className="m-0 text-xs leading-[1.5] text-[#6D778F]">
+                  No transcript for this call. It appears once Telnyx has
+                  finished the conversation — recordings are not captured.
+                </p>
+              ) : (
+                <div className="flex max-h-[420px] flex-col gap-3 overflow-y-auto pr-1">
+                  {active.transcript.map((line) => {
+                    const isCaller = line.speaker === 'customer';
+                    return (
+                      <div
+                        key={line.id}
+                        className={`flex ${isCaller ? 'justify-start' : 'justify-end'}`}
+                      >
+                        <div
+                          className={`max-w-[85%] px-3.5 py-2.5 text-[13px] leading-[1.5] ${
+                            isCaller
+                              ? 'rounded-[13px_13px_13px_4px] bg-white/[.07] text-[#D6DBE8]'
+                              : 'rounded-[13px_13px_4px_13px] bg-[#2F6BFF] text-white'
+                          }`}
+                        >
+                          <div className="mb-1 flex items-center gap-2 text-[10px] font-bold tracking-[.07em] uppercase opacity-60">
+                            <span>{isCaller ? 'Caller' : 'AI receptionist'}</span>
+                            {line.time && <span>{line.time}</span>}
+                          </div>
+                          {line.text}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <div className="mt-[18px] flex flex-wrap gap-2">
               <a

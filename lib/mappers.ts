@@ -136,10 +136,20 @@ export function toCall(call: ApiCall): Call {
     audioDurationSeconds: call.durationSeconds ?? 0,
     outcome: call.outcome ? CALL_OUTCOMES[call.outcome] : 'no_action',
     summary: describeCall(call),
-    // Recordings and transcripts aren't wired up yet (nothing populates
-    // transcriptRef), so these stay empty instead of showing invented turns.
+    // Recordings are still not captured; the transcript comes from the
+    // Telnyx conversation the call produced.
     recordingUrl: undefined,
-    transcript: [],
+    transcript: (call.transcript ?? []).map((line, index) => ({
+      id: `${call.id}-${index}`,
+      speaker: line.role === 'assistant' ? 'ai' : 'customer',
+      time: line.at
+        ? new Date(line.at).toLocaleTimeString([], {
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+        : '',
+      text: line.text,
+    })),
     extractedAppointment: appointment
       ? {
           customerName: appointment.customerName ?? '',

@@ -139,6 +139,13 @@ export interface ApiAppointment {
   updatedAt: string;
 }
 
+/** One line of a call transcript, as stored by the conversation sync. */
+export interface ApiTranscriptLine {
+  role: 'assistant' | 'caller';
+  text: string;
+  at: string | null;
+}
+
 export interface ApiCall {
   id: string;
   callControlId: string;
@@ -152,6 +159,9 @@ export interface ApiCall {
   costCents: number | null;
   outcome: ApiCallOutcome | null;
   resolvedAt: string | null;
+  /** Telnyx's record of what was said, newest sync wins. */
+  transcript: ApiTranscriptLine[] | null;
+  conversationId: string | null;
   transcriptRef: string | null;
   appointment: ApiAppointment | null;
 }
